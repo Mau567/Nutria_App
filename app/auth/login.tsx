@@ -11,12 +11,6 @@ export default function LoginScreen() {
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    // Basic validation
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
     setIsLoading(true);
     try {
       // For demo purposes, simulate a network delay
@@ -79,12 +73,8 @@ export default function LoginScreen() {
         />
 
         <TouchableOpacity 
-          style={[
-            styles.button, 
-            (!email || !password || isLoading) && styles.buttonDisabled
-          ]}
+          style={[styles.button]}
           onPress={handleLogin}
-          disabled={!email || !password || isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
