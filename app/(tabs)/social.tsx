@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, TextInput, useWindowDimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSocial } from '../context/social';
 
 interface Post {
@@ -115,10 +115,25 @@ const MOCK_POSTS: Post[] = [
 ];
 
 export default function SocialScreen() {
-  const [activeTab, setActiveTab] = useState(1);
+  const { width } = useWindowDimensions();
+  const [activeTab, setActiveTab] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const { posts, likePost, addComment, likedPosts } = useSocial();
+  const { forYouPosts, followingPosts, likePost, addComment, likedPosts } = useSocial();
+  const flatListRef = useRef<FlatList>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const handleTabPress = (index: number) => {
+    setActiveTab(index);
+    flatListRef.current?.scrollToIndex({ index, animated: true });
+  };
+
+  const handleScroll = (event: any) => {
+    const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    if (newIndex !== activeTab) {
+      setActiveTab(newIndex);
+    }
+  };
 
   const handleComment = (postId: string) => {
     setSelectedPostId(selectedPostId === postId ? null : postId);
@@ -238,6 +253,53 @@ export default function SocialScreen() {
     </View>
   );
 
+  const renderTabContent = ({ item: tabIndex }: { item: number }) => {
+    const posts = tabIndex === 0 ? forYouPosts : followingPosts;
+    
+    return (
+      <View style={{ width, flex: 1 }}>
+        <FlatList
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.feed}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={true}
+          style={{ flex: 1 }}
+        />
+      </View>
+    );
+  };
+
+  const getTabStyle = (index: number) => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width,
+    ];
+
+    const opacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.5, 1, 0.5],
+      extrapolate: 'clamp',
+    });
+
+    const borderOpacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0, 1, 0],
+      extrapolate: 'clamp',
+    });
+
+    return {
+      opacity,
+      borderBottomWidth: 2,
+      borderBottomColor: borderOpacity.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['transparent', '#fff'],
+      }),
+    };
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -245,12 +307,29 @@ export default function SocialScreen() {
           {TABS.map((tab, index) => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tab, activeTab === index && styles.activeTab]}
-              onPress={() => setActiveTab(index)}
+              style={[styles.tab]}
+              onPress={() => handleTabPress(index)}
             >
-              <Text style={[styles.tabText, activeTab === index && styles.activeTabText]}>
-                {tab}
-              </Text>
+              <Animated.View style={[styles.tabContent, getTabStyle(index)]}>
+                <Animated.Text 
+                  style={[
+                    styles.tabText,
+                    {
+                      color: scrollX.interpolate({
+                        inputRange: [
+                          (index - 1) * width,
+                          index * width,
+                          (index + 1) * width,
+                        ],
+                        outputRange: ['#6b7280', '#fff', '#6b7280'],
+                        extrapolate: 'clamp',
+                      }),
+                    },
+                  ]}
+                >
+                  {tab}
+                </Animated.Text>
+              </Animated.View>
             </TouchableOpacity>
           ))}
         </View>
@@ -271,14 +350,22 @@ export default function SocialScreen() {
         </View>
       </View>
 
-      <View style={styles.content}>
-        <FlatList
-          data={posts}
-          renderItem={renderPost}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.feed}
-        />
-      </View>
+      <Animated.FlatList
+        ref={flatListRef}
+        data={[0, 1]}
+        renderItem={renderTabContent}
+        keyExtractor={(item) => item.toString()}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        style={styles.content}
+      />
     </SafeAreaView>
   );
 }
@@ -333,23 +420,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#fff',
+  tabContent: {
+    flex: 1,
   },
   tabText: {
-    color: '#6b7280',
     fontSize: 16,
     fontWeight: '600',
-  },
-  activeTabText: {
-    color: '#fff',
   },
   content: {
     flex: 1,
   },
   feed: {
     padding: 16,
+    paddingBottom: 32,
   },
   post: {
     backgroundColor: '#1f1f1f',
