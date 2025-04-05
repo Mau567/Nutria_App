@@ -265,7 +265,7 @@ export default function SocialScreen() {
           contentContainerStyle={styles.feed}
           showsVerticalScrollIndicator={false}
           scrollEnabled={true}
-          style={{ flex: 1 }}
+          style={{ flex: 1, overflow: 'scroll' }}
         />
       </View>
     );
@@ -364,7 +364,7 @@ export default function SocialScreen() {
           { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
-        style={styles.content}
+        style={[styles.content, { overflow: 'scroll' }]}
       />
     </SafeAreaView>
   );
