@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "build": "expo export --platform web",
-    "vercel-build": "expo export:web",
+    "vercel-build": "npx expo install && npx expo export --platform web --verbose",
     "web": "expo start --web",
     "lint": "expo lint",
     "android": "expo run:android",
