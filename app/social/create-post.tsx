@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { useSocial } from '../context/social';
 
 export default function CreatePostScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -13,6 +14,7 @@ export default function CreatePostScreen() {
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [caption, setCaption] = useState('');
+  const { addPost } = useSocial();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -51,17 +53,44 @@ export default function CreatePostScreen() {
       return;
     }
 
-    // For demo purposes, just show success and go back
-    Alert.alert(
-      'Success',
-      'Your meal has been posted!',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
+    // Create new post
+    const newPost = {
+      id: Date.now().toString(),
+      user: {
+        name: 'You',
+        avatar: 'https://i.pravatar.cc/150?img=8',
+      },
+      timestamp: 'Just now',
+      meal: {
+        name: mealName,
+        image: image,
+        calories: parseInt(calories),
+        macros: {
+          protein: parseInt(protein) || 0,
+          carbs: parseInt(carbs) || 0,
+          fat: parseInt(fat) || 0,
         },
-      ]
-    );
+      },
+      caption: caption,
+      likes: 0,
+      comments: 0,
+      commentsList: [],
+    };
+
+    // Add the post to the social context
+    addPost(newPost);
+
+    // Navigate back to social feed
+    router.back();
+    
+    // Show success message
+    setTimeout(() => {
+      Alert.alert(
+        'Success',
+        'Your meal has been posted!',
+        [{ text: 'OK' }]
+      );
+    }, 100);
   };
 
   return (

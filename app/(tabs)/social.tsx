@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useSocial } from '../context/social';
 
 interface Post {
   id: string;
@@ -24,6 +25,15 @@ interface Post {
   caption: string;
   likes: number;
   comments: number;
+  commentsList: {
+    id: string;
+    user: {
+      name: string;
+      avatar: string;
+    };
+    text: string;
+    timestamp: string;
+  }[];
 }
 
 const TABS = ['For you', 'Following'];
@@ -48,7 +58,27 @@ const MOCK_POSTS: Post[] = [
     },
     caption: 'Starting my day right with this nutritious breakfast bowl! 🥣✨',
     likes: 128,
-    comments: 12,
+    comments: 2,
+    commentsList: [
+      {
+        id: '1',
+        user: {
+          name: 'Mike Chen',
+          avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        text: 'Looks delicious! What kind of fruits did you use?',
+        timestamp: '1h ago',
+      },
+      {
+        id: '2',
+        user: {
+          name: 'Emma Thompson',
+          avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+        },
+        text: 'Love the presentation! 😍',
+        timestamp: '30m ago',
+      },
+    ],
   },
   {
     id: '2',
@@ -68,43 +98,30 @@ const MOCK_POSTS: Post[] = [
     },
     caption: 'Starting the day right with this protein-packed bowl 💪',
     likes: 18,
-    comments: 3,
+    comments: 1,
     timestamp: '4h ago',
+    commentsList: [
+      {
+        id: '1',
+        user: {
+          name: 'Sarah Wilson',
+          avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+        },
+        text: 'What protein powder do you use?',
+        timestamp: '15m ago',
+      },
+    ],
   },
 ];
 
 export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState(1);
-  const [likedPosts, setLikedPosts] = useState<string[]>([]);
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
-
-  const handleLike = (postId: string) => {
-    if (likedPosts.includes(postId)) {
-      // Unlike
-      setLikedPosts(likedPosts.filter(id => id !== postId));
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { ...post, likes: post.likes - 1 }
-          : post
-      ));
-    } else {
-      // Like
-      setLikedPosts([...likedPosts, postId]);
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { ...post, likes: post.likes + 1 }
-          : post
-      ));
-    }
-  };
+  const [newComment, setNewComment] = useState('');
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const { posts, likePost, addComment, likedPosts } = useSocial();
 
   const handleComment = (postId: string) => {
-    // For demo purposes, just increment comment count
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, comments: post.comments + 1 }
-        : post
-    ));
+    setSelectedPostId(selectedPostId === postId ? null : postId);
   };
 
   const handleShare = (postId: string) => {
@@ -115,6 +132,12 @@ export default function SocialScreen() {
   const handleOptionsPress = (postId: string) => {
     // For demo purposes, show a console log
     console.log(`Options pressed for post ${postId}`);
+  };
+
+  const handleAddComment = (postId: string) => {
+    if (!newComment.trim()) return;
+    addComment(postId, { text: newComment.trim() });
+    setNewComment('');
   };
 
   const renderPost = ({ item }: { item: Post }) => (
@@ -153,7 +176,7 @@ export default function SocialScreen() {
         <View style={styles.postActions}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => handleLike(item.id)}
+            onPress={() => likePost(item.id)}
           >
             <Ionicons 
               name={likedPosts.includes(item.id) ? "heart" : "heart-outline"} 
@@ -176,6 +199,41 @@ export default function SocialScreen() {
             <Ionicons name="share-outline" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
+
+        {selectedPostId === item.id && (
+          <View style={styles.commentsSection}>
+            <FlatList
+              data={item.commentsList}
+              keyExtractor={(comment) => comment.id}
+              renderItem={({ item: comment }) => (
+                <View style={styles.commentItem}>
+                  <Image source={{ uri: comment.user.avatar }} style={styles.commentAvatar} />
+                  <View style={styles.commentContent}>
+                    <Text style={styles.commentUserName}>{comment.user.name}</Text>
+                    <Text style={styles.commentText}>{comment.text}</Text>
+                    <Text style={styles.commentTimestamp}>{comment.timestamp}</Text>
+                  </View>
+                </View>
+              )}
+              style={styles.commentsList}
+            />
+            <View style={styles.addCommentSection}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add a comment..."
+                placeholderTextColor="#6b7280"
+                value={newComment}
+                onChangeText={setNewComment}
+              />
+              <TouchableOpacity 
+                style={styles.sendButton}
+                onPress={() => handleAddComment(item.id)}
+              >
+                <Ionicons name="send" size={24} color="#3b82f6" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -366,5 +424,60 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     color: '#fff',
+  },
+  commentsSection: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#2f2f2f',
+    paddingTop: 12,
+  },
+  commentsList: {
+    maxHeight: 200,
+  },
+  commentItem: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  commentContent: {
+    flex: 1,
+  },
+  commentUserName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  commentText: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 2,
+  },
+  commentTimestamp: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  addCommentSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: '#1f1f1f',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    color: '#fff',
+    fontSize: 14,
+  },
+  sendButton: {
+    padding: 8,
   },
 }); 
