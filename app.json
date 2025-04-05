@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Nutria",
+    "slug": "nutria-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "nutria",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nutria.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes and take photos of meals."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.nutria.app",
+      "permissions": ["CAMERA"]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "nutria-app"
+      }
+    },
+    "owner": "nutria-app",
+    "plugins": [
+      "expo-barcode-scanner",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes and take photos of meals."
+        }
+      ]
+    ]
+  }
+}
