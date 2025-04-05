@@ -245,7 +245,11 @@ export default function ChatScreen() {
             <Text style={styles.title}>Chat</Text>
           </View>
         </View>
-        <View style={styles.tabs}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsContainer}
+        >
           <TouchableOpacity
             style={[styles.tab, activeTab === 'ai' && styles.activeTab]}
             onPress={() => setActiveTab('ai')}
@@ -283,7 +287,7 @@ export default function ChatScreen() {
             />
             <Text style={styles.tabText}>Friends</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </View>
 
       {activeTab === 'ai' ? (
@@ -351,29 +355,33 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 28,
   },
+  tabsContainer: {
+    paddingHorizontal: 16,
+  },
   tabs: {
     flexDirection: 'row',
-    gap: 16,
+    paddingVertical: 8,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
+    marginRight: 12,
     borderRadius: 20,
     backgroundColor: '#1f1f1f',
   },
   activeTab: {
-    backgroundColor: '#3b82f620',
+    backgroundColor: '#3b82f6',
   },
   tabText: {
-    color: '#6b7280',
+    marginLeft: 8,
     fontSize: 14,
-    fontWeight: '600',
+    color: '#6b7280',
+    fontWeight: '500',
   },
   activeTabText: {
-    color: '#3b82f6',
+    color: '#fff',
   },
   messagesContainer: {
     padding: 16,
