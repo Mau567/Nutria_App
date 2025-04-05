@@ -20,7 +20,8 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "declaration": true
   },
   "include": [
     "**/*.ts",
