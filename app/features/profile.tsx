@@ -20,6 +20,15 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           {/* Profile Header */}
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Profile</Text>
+          </View>
           <View style={styles.profileHeader}>
             <View style={styles.profileInfo}>
               <Image
@@ -181,6 +190,21 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   profileHeader: {
     flexDirection: 'row',
